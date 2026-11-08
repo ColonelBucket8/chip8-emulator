@@ -1,0 +1,8 @@
+--target=x86_64-w64-mingw32
+--sysroot=C:/Users/freed/scoop/apps/gcc/current
+-std=c11
+-Wall
+-Wextra
+-Iinclude
+-isystemC:/Users/freed/scoop/apps/gcc/current/x86_64-w64-mingw32/include
+-isystemC:/Users/freed/scoop/apps/gcc/current/include
