@@ -1,0 +1,23 @@
+# Compiled executables & binaries
+*.exe
+*.out
+*.app
+
+# Object & dependency files
+*.o
+*.obj
+*.d
+
+# Debug files
+*.pdb
+*.ilk
+*.map
+
+# Temporary test files
+roms/oversize_tmp.bin
+
+# Editor / OS directories and metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
