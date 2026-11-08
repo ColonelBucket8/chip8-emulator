@@ -1,4 +1,5 @@
 #include "chip8.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,6 +115,10 @@ void chip8_step(Chip8 *cpu)
     (void)y;
 
     /* 3. EXECUTE: Switch on the top 4 bits (highest nibble) */
+    //   opcode:          0x D  0  1  F
+    // & mask:            0x F  0  0  0
+    // ---------------------------------
+    //   result:          0x D  0  0  0  --> matches `case 0xD000:`
     switch (opcode & 0xF000)
     {
     case 0x0000:
@@ -141,6 +146,7 @@ void chip8_step(Chip8 *cpu)
     case 0x1000:
         /* TODO [Milestone 1]: 1NNN (JP addr)
          * Jump directly to address nnn: set cpu->pc = nnn. */
+        cpu->pc = nnn;
         break;
 
     case 0x2000:
@@ -169,11 +175,13 @@ void chip8_step(Chip8 *cpu)
     case 0x6000:
         /* TODO [Milestone 1]: 6XNN (LD Vx, byte)
          * Load immediate byte nn into register cpu->V[x]. */
+        cpu->V[x] = nn;
         break;
 
     case 0x7000:
         /* TODO [Milestone 1]: 7XNN (ADD Vx, byte)
          * Add nn to cpu->V[x] (carry flag VF is NOT modified). */
+        cpu->V[x] += nn;
         break;
 
     case 0x8000:
@@ -199,6 +207,7 @@ void chip8_step(Chip8 *cpu)
     case 0xA000:
         /* TODO [Milestone 1]: ANNN (LD I, addr)
          * Set index register cpu->I = nnn. */
+        cpu->I = nnn;
         break;
 
     case 0xB000:
@@ -227,6 +236,37 @@ void chip8_step(Chip8 *cpu)
          *            If cpu->display[idx] == 1, set cpu->V[0xF] = 1
          * (collision!) cpu->display[idx] ^= 1;
          * 4. Set cpu->draw_flag = true; */
+        uint8_t start_x = cpu->V[x] % CHIP8_WIDTH;
+        uint8_t start_y = cpu->V[y] % CHIP8_HEIGHT;
+        cpu->V[0xF] = 0;
+
+        for (int row = 0; row < n; row++)
+        {
+            uint8_t sprite_byte = cpu->memory[cpu->I + row];
+
+            for (int col = 0; col < 8; col++)
+            {
+                // col=0 checks 10000000, col=1 checks 01000000, ..., col=7
+                // checks 00000001
+                if ((sprite_byte & (0x80 >> col)) != 0)
+                {
+                    int px = start_x + col;
+                    int py = start_y + row;
+
+                    if (px < CHIP8_WIDTH && py < CHIP8_HEIGHT)
+                    {
+                        size_t idx = py * CHIP8_WIDTH + px;
+                        if (cpu->display[idx] == 1)
+                        {
+                            cpu->V[0xF] = 1;
+                        }
+                        cpu->display[idx] ^= 1;
+                    }
+                }
+            }
+        }
+
+        cpu->draw_flag = true;
         break;
 
     case 0xE000:
