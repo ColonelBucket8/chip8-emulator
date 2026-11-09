@@ -136,6 +136,8 @@ void chip8_step(Chip8 *cpu)
             /* TODO [Milestone 2]: 00EE (RET)
              * Return from subroutine: decrement cpu->sp, then set cpu->pc =
              * cpu->stack[cpu->sp]. */
+            cpu->sp--;
+            cpu->pc = cpu->stack[cpu->sp];
             break;
 
         default:
@@ -155,21 +157,36 @@ void chip8_step(Chip8 *cpu)
          * 1. Store current cpu->pc into cpu->stack[cpu->sp]
          * 2. Increment cpu->sp
          * 3. Set cpu->pc = nnn */
+        cpu->stack[cpu->sp] = cpu->pc;
+        cpu->sp++;
+        cpu->pc = nnn;
         break;
 
     case 0x3000:
         /* TODO [Milestone 2]: 3XNN (SE Vx, byte)
          * Skip next instruction (cpu->pc += 2) if cpu->V[x] == nn. */
+        if (cpu->V[x] == nn)
+        {
+            cpu->pc += 2;
+        }
         break;
 
     case 0x4000:
         /* TODO [Milestone 2]: 4XNN (SNE Vx, byte)
          * Skip next instruction (cpu->pc += 2) if cpu->V[x] != nn. */
+        if (cpu->V[x] != nn)
+        {
+            cpu->pc += 2;
+        }
         break;
 
     case 0x5000:
         /* TODO [Milestone 2]: 5XY0 (SE Vx, Vy)
          * Skip next instruction (cpu->pc += 2) if cpu->V[x] == cpu->V[y]. */
+        if (cpu->V[x] == cpu->V[y])
+        {
+            cpu->pc += 2;
+        }
         break;
 
     case 0x6000:
@@ -202,6 +219,10 @@ void chip8_step(Chip8 *cpu)
     case 0x9000:
         /* TODO [Milestone 2]: 9XY0 (SNE Vx, Vy)
          * Skip next instruction (cpu->pc += 2) if cpu->V[x] != cpu->V[y]. */
+        if (cpu->V[x] != cpu->V[y])
+        {
+            cpu->pc += 2;
+        }
         break;
 
     case 0xA000:
@@ -213,11 +234,13 @@ void chip8_step(Chip8 *cpu)
     case 0xB000:
         /* TODO [Milestone 2]: BNNN (JP V0, addr)
          * Jump to address nnn + cpu->V[0]. */
+        cpu->pc = nnn + cpu->V[0];
         break;
 
     case 0xC000:
         /* TODO [Milestone 2]: CXNN (RND Vx, byte)
          * Set cpu->V[x] = (uint8_t)(rand() & 0xFF) & nn. */
+        cpu->V[x] = (uint8_t)(rand() & 0xFF) & nn;
         break;
 
     case 0xD000:
