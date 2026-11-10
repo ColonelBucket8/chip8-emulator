@@ -214,11 +214,63 @@ void chip8_step(Chip8 *cpu)
          *   0x7: Set V[0xF] = (V[y] >= V[x]), then V[x] = V[y] - V[x]
          *   0xE: Save MSB ((V[x] >> 7) & 1) to flag, V[x] <<= 1, V[0xF] = flag
          */
+        switch (n)
+        {
+        case (0x0):
+            cpu->V[x] = cpu->V[y];
+            break;
+        case (0x1):
+            cpu->V[x] |= cpu->V[y];
+            break;
+        case (0x2):
+            cpu->V[x] &= cpu->V[y];
+            break;
+        case (0x3):
+            cpu->V[x] ^= cpu->V[y];
+            break;
+        case (0x4):
+        {
+            uint16_t sum = cpu->V[x] + cpu->V[y];
+            cpu->V[x] = (uint8_t)sum;
+            if (sum > 255)
+            {
+                cpu->V[0xF] = 1;
+            }
+            else
+            {
+                cpu->V[0xF] = 0;
+            }
+            break;
+        }
+        case (0x5):
+            cpu->V[0xF] = (cpu->V[x] >= cpu->V[y]);
+            cpu->V[x] -= cpu->V[y];
+            break;
+        case (0x6):
+        {
+            uint8_t flag = cpu->V[x] & 1;
+            cpu->V[x] >>= 1;
+            cpu->V[0xF] = flag;
+            break;
+        }
+        case (0x7):
+            cpu->V[0xF] = (cpu->V[y] >= cpu->V[x]);
+            cpu->V[x] = cpu->V[y] - cpu->V[x];
+            break;
+        case (0xE):
+        {
+            uint8_t flag = (cpu->V[x] >> 7) & 1;
+            cpu->V[x] <<= 1;
+            cpu->V[0xF] = flag;
+            break;
+        }
+        }
         break;
 
     case 0x9000:
         /* TODO [Milestone 2]: 9XY0 (SNE Vx, Vy)
-         * Skip next instruction (cpu->pc += 2) if cpu->V[x] != cpu->V[y]. */
+         * Skip next instruction (cpu->pc += 2) if cpu->V[x] !=
+         * cpu->V[y]. */
         if (cpu->V[x] != cpu->V[y])
         {
             cpu->pc += 2;
@@ -245,7 +297,8 @@ void chip8_step(Chip8 *cpu)
 
     case 0xD000:
         /* TODO [Milestone 1]: DXYN (DRW Vx, Vy, nibble)
-         * Draw an N-byte sprite from memory[I .. I + n - 1] at (V[x], V[y]):
+         * Draw an N-byte sprite from memory[I .. I + n - 1] at (V[x],
+         * V[y]):
          * 1. Set uint8_t start_x = cpu->V[x] % CHIP8_WIDTH;
          *    Set uint8_t start_y = cpu->V[y] % CHIP8_HEIGHT;
          * 2. Set cpu->V[0xF] = 0;
@@ -269,8 +322,8 @@ void chip8_step(Chip8 *cpu)
 
             for (int col = 0; col < 8; col++)
             {
-                // col=0 checks 10000000, col=1 checks 01000000, ..., col=7
-                // checks 00000001
+                // col=0 checks 10000000, col=1 checks 01000000, ...,
+                // col=7 checks 00000001
                 if ((sprite_byte & (0x80 >> col)) != 0)
                 {
                     int px = start_x + col;
@@ -295,22 +348,23 @@ void chip8_step(Chip8 *cpu)
     case 0xE000:
         /* TODO [Milestone 4]: Keypad Skip Instructions
          *   nn == 0x9E (EX9E): Skip next instruction (pc += 2) if
-         * cpu->keys[cpu->V[x]] != 0 nn == 0xA1 (EXA1): Skip next instruction
-         * (pc += 2) if cpu->keys[cpu->V[x]] == 0 */
+         * cpu->keys[cpu->V[x]] != 0 nn == 0xA1 (EXA1): Skip next
+         * instruction (pc += 2) if cpu->keys[cpu->V[x]] == 0 */
         break;
 
     case 0xF000:
         /* TODO [Milestone 4]: Timers, Keypad Wait, Font, BCD, Memory
          * Switch on `nn`:
          *   0x07: V[x] = cpu->delay_timer
-         *   0x0A: Wait for key press: scan keys[0..15]; if key i is pressed,
-         * V[x] = i; if NO key pressed, repeat this instruction by setting
-         * cpu->pc -= 2; 0x15: cpu->delay_timer = V[x] 0x18: cpu->sound_timer =
-         * V[x] 0x1E: cpu->I += V[x] 0x29: cpu->I = CHIP8_FONT_START + (V[x] &
-         * 0x0F) * 5 0x33: Store BCD of V[x] at memory[I..I+2]: memory[I]   =
-         * V[x] / 100; memory[I+1] = (V[x] / 10) % 10; memory[I+2] = V[x] % 10;
-         *   0x55: Copy V[0..x] into memory[I .. I+x]
-         *   0x65: Load V[0..x] from memory[I .. I+x] */
+         *   0x0A: Wait for key press: scan keys[0..15]; if key i is
+         * pressed, V[x] = i; if NO key pressed, repeat this instruction
+         * by setting cpu->pc -= 2; 0x15: cpu->delay_timer = V[x] 0x18:
+         * cpu->sound_timer = V[x] 0x1E: cpu->I += V[x] 0x29: cpu->I =
+         * CHIP8_FONT_START + (V[x] & 0x0F) * 5 0x33: Store BCD of V[x]
+         * at memory[I..I+2]: memory[I]   = V[x] / 100; memory[I+1] =
+         * (V[x] / 10) % 10; memory[I+2] = V[x] % 10; 0x55: Copy V[0..x]
+         * into memory[I .. I+x] 0x65: Load V[0..x] from memory[I ..
+         * I+x] */
         break;
 
     default:
